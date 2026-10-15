@@ -231,3 +231,39 @@ a:focus-visible {
 /* Shell's text-size preference scales rem-based app typography. */
 :root[data-text='lg'] { font-size: 112.5%; }
 :root[data-text='sm'] { font-size: 87.5%; }
+
+/* Recordings screen controls. 44px targets for touch. */
+.vr-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 1rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--panel-strong);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.vr-btn:hover:not(:disabled) { border-color: var(--accent); }
+.vr-btn:disabled { opacity: 0.5; cursor: default; }
+.vr-btn--primary { border-color: transparent; background: var(--accent); color: #fff; }
+.vr-btn--primary:hover:not(:disabled) { background: var(--accent-deep); border-color: transparent; }
+:root[data-theme='dark'] .vr-btn--primary { color: #000; }
+:root[data-theme='dark'] .vr-btn--primary:hover:not(:disabled) { color: #000; }
+.vr-btn--danger { color: var(--danger); }
+.vr-btn--danger:hover:not(:disabled) { border-color: var(--danger); }
+.vr-input {
+  min-height: 44px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: max(16px, 1rem); /* below 16px iOS zooms the page on focus */
+}
+.vr-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.vr-seek { height: 44px; accent-color: var(--accent); cursor: pointer; }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { initApp } from '@freeappstore/sdk'
 import { BuildInfo, type NavItem, PageHeader, Shell } from '@freeappstore/sdk/ui'
+import { Recordings } from './Recordings.tsx'
 
 const fas = initApp({ appId: 'voicerecorder' })
 
@@ -46,7 +47,7 @@ function Screen({ path }: { path: string }) {
       return (
         <>
           <PageHeader title="Recordings" description="Play, rename, share or delete what you've recorded." />
-          <ComingSoon />
+          <Recordings />
         </>
       )
     case '/about':
