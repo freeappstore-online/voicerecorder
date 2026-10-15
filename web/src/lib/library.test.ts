@@ -151,3 +151,16 @@ describe('fileNameFor', () => {
     expect(fileNameFor({ name: '...take', mimeType: 'audio/webm' })).toBe('take.webm')
   })
 })
+
+describe('Library change events', () => {
+  it('fires on save, rename and delete', async () => {
+    const lib = new Library(new IDBFactory())
+    let count = 0
+    lib.addEventListener('change', () => count++)
+    const meta = await lib.save({ blob: webm(), durationMs: 1 })
+    await lib.rename(meta.id, 'x')
+    await lib.remove(meta.id)
+    expect(count).toBe(3)
+    lib.close()
+  })
+})

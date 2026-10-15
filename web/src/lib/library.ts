@@ -39,12 +39,13 @@ const AUDIO = 'audio'
 /** Longest name we keep; anything longer is cut. */
 export const MAX_NAME_LENGTH = 80
 
-export class Library {
+export class Library extends EventTarget {
   private db: Promise<IDBDatabase> | null = null
   private readonly factory: IDBFactory
   private readonly dbName: string
 
   constructor(factory: IDBFactory = indexedDB, dbName = DB_NAME) {
+    super()
     this.factory = factory
     this.dbName = dbName
   }
@@ -65,6 +66,7 @@ export class Library {
       meta_.add(meta)
       audio.add({ id: meta.id, bytes })
     })
+    this.changed()
     return meta
   }
 
@@ -107,6 +109,7 @@ export class Library {
       }
     })
     if (!updated) throw new Error('That recording no longer exists.')
+    this.changed()
     return updated
   }
 
@@ -116,6 +119,12 @@ export class Library {
       meta.delete(id)
       audio.delete(id)
     })
+    this.changed()
+  }
+
+  /** Fires a `change` event so open screens can refresh. */
+  private changed(): void {
+    this.dispatchEvent(new Event('change'))
   }
 
   close(): void {

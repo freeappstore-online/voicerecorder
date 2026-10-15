@@ -30,8 +30,14 @@ export function Recordings() {
     }
   }, [])
 
+  // Load now, and again whenever a recording is saved, renamed or deleted
+  // (the Record screen can finish saving after this one has opened).
   useEffect(() => {
     void reload()
+    const lib = library()
+    const onChange = () => void reload()
+    lib.addEventListener('change', onChange)
+    return () => lib.removeEventListener('change', onChange)
   }, [reload])
 
   const confirmDelete = async () => {

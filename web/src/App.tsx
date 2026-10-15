@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { initApp } from '@freeappstore/sdk'
 import { BuildInfo, type NavItem, PageHeader, Shell } from '@freeappstore/sdk/ui'
+import { Record } from './Record.tsx'
 import { Recordings } from './Recordings.tsx'
 
 const fas = initApp({ appId: 'voicerecorder' })
@@ -34,14 +35,14 @@ export default function App() {
   return (
     <Shell app={fas} appName="Voice Recorder" nav={NAV} onNavigate={navigate}>
       <div className="mx-auto w-full max-w-3xl p-4 sm:p-8">
-        <Screen path={path} />
+        <Screen path={path} navigate={navigate} />
       </div>
       <BuildInfo />
     </Shell>
   )
 }
 
-function Screen({ path }: { path: string }) {
+function Screen({ path, navigate }: { path: string; navigate: (href: string) => void }) {
   switch (path) {
     case '/recordings':
       return (
@@ -54,11 +55,11 @@ function Screen({ path }: { path: string }) {
       return (
         <>
           <PageHeader title="About" />
-          <ComingSoon />
-          <p className="mt-4 text-[var(--muted)]">
-            Voice Recorder will record your voice with one big button, keep your recordings on this
-            device, and let you play them back or export them with effects: chipmunk, deep, robot,
-            echo, reverb, radio and reverse. Your audio will never leave your device.
+          <p className="text-[var(--muted)]">
+            Voice Recorder records your voice with one big button, keeps your recordings on this
+            device, and lets you play, rename, share or download them. Your audio never leaves your
+            device. Voice effects (chipmunk, deep, robot, echo, reverb, radio and reverse) are coming
+            soon.
           </p>
           <p className="mt-4 text-[var(--muted)]">
             Voice Recorder is a free, MIT-licensed app on{' '}
@@ -72,20 +73,10 @@ function Screen({ path }: { path: string }) {
     default:
       return (
         <>
-          <PageHeader title="Record" description="Record your voice, then change it with effects." />
-          <ComingSoon />
+          <PageHeader title="Record" description="Record your voice. It stays on this device." />
+          <Record onOpenRecordings={() => navigate('/recordings')} />
         </>
       )
   }
 }
 
-// Placeholder body until the screens are built. Nothing records yet and the
-// microphone is never requested, so it says so plainly.
-function ComingSoon() {
-  return (
-    <p className="rounded-[var(--radius)] border border-[var(--line)] bg-[var(--panel)] p-4 text-[var(--muted)]">
-      Coming soon. Voice Recorder is in development; it doesn't record anything yet and won't ask
-      for your microphone.
-    </p>
-  )
-}
