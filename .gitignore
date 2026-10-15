@@ -1,0 +1,11 @@
+node_modules
+dist
+.vite
+*.local
+.DS_Store
+
+# TypeScript incremental build cache
+*.tsbuildinfo
+
+# VibeCode QA reports (regenerated on each scan)
+.vibe-check/

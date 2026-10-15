@@ -1,0 +1,15 @@
+{
+  "name": "voicerecorder",
+  "private": true,
+  "packageManager": "pnpm@10.30.3",
+  "engines": { "node": ">=22" },
+  "pnpm": { "onlyBuiltDependencies": ["esbuild"] },
+  "repository": { "type": "git", "url": "git+https://github.com/freeappstore-online/voicerecorder.git" },
+  "scripts": {
+    "dev": "pnpm --filter @voicerecorder/web dev",
+    "build": "pnpm --filter @voicerecorder/web build",
+    "preview": "pnpm --filter @voicerecorder/web preview",
+    "typecheck": "pnpm --filter @voicerecorder/web exec tsc -b",
+    "test": "pnpm --filter @voicerecorder/web exec tsc -b"
+  }
+}
