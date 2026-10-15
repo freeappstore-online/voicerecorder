@@ -315,7 +315,12 @@ export async function exportWithEffect(
   createContext: OfflineContextFactory = defaultOffline,
 ): Promise<Blob> {
   const rendered = await renderWithEffect(buffer, effect, createContext)
-  return encodeWav(channelsOf(rendered), rendered.sampleRate)
+  return audioBufferToWav(rendered)
+}
+
+/** Encodes a whole AudioBuffer as a WAV file (see `encodeWav`). */
+export function audioBufferToWav(buffer: AudioBuffer): Blob {
+  return encodeWav(channelsOf(buffer), buffer.sampleRate)
 }
 
 /** Copies of each channel's samples (copies, so they outlive the buffer). */

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { type ShareEnv, canShareFile, shareOrDownload } from './share.ts'
+import { ExportError } from './export.ts'
+import { type ShareEnv, canShareFile, shareOrDownload, shareRecording } from './share.ts'
 
 interface FakeAnchor {
   href: string
@@ -96,5 +97,54 @@ describe('canShareFile', () => {
       throw new TypeError('bad')
     }
     expect(canShareFile(file, { navigator: { share: vi.fn(), canShare } })).toBe(false)
+  })
+})
+
+describe('shareRecording', () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  it('shares an iOS MP4 recording as-is, as .m4a with a bare MIME type', async () => {
+    const share = vi.fn().mockResolvedValue(undefined)
+    const { env } = fakeEnv({ share, canShare: () => true })
+    const blob = new Blob(['aac'], { type: 'audio/mp4;codecs=mp4a.40.2' })
+    expect(await shareRecording({ blob, mimeType: blob.type, name: 'Memo' }, { env })).toBe('shared')
+    const file = (share.mock.calls[0][0] as ShareData).files![0]
+    expect(file.name).toBe('Memo.m4a')
+    expect(file.type).toBe('audio/mp4')
+    expect(await file.text()).toBe('aac')
+  })
+
+  it('shares the prepared (converted) file when one is passed in', async () => {
+    const share = vi.fn().mockResolvedValue(undefined)
+    const { env } = fakeEnv({ share, canShare: () => true })
+    const wav = new File(['RIFF'], 'Memo.wav', { type: 'audio/wav' })
+    const blob = new Blob(['opus'], { type: 'audio/webm;codecs=opus' })
+    await shareRecording({ blob, mimeType: blob.type, name: 'Memo' }, { file: Promise.resolve(wav), env })
+    const sent = (share.mock.calls[0][0] as ShareData).files![0]
+    expect(sent.name).toBe('Memo.wav')
+    expect(sent.type).toBe('audio/wav')
+  })
+
+  it('downloads the converted file when it cannot share (desktop Chrome)', async () => {
+    const { env, anchors } = fakeEnv({})
+    const wav = new File(['RIFF'], 'Memo.wav', { type: 'audio/wav' })
+    const blob = new Blob(['opus'], { type: 'audio/webm' })
+    expect(await shareRecording({ blob, mimeType: blob.type, name: 'Memo' }, { file: Promise.resolve(wav), env })).toBe(
+      'downloaded',
+    )
+    expect(anchors[0].download).toBe('Memo.wav')
+  })
+
+  it('surfaces a conversion error and neither shares nor downloads', async () => {
+    const share = vi.fn()
+    const { env, anchors } = fakeEnv({ share, canShare: () => true })
+    const failure = new ExportError('decode', 'Could not decode this recording (WebM/Opus).')
+    const blob = new Blob(['opus'], { type: 'audio/webm' })
+    await expect(
+      shareRecording({ blob, mimeType: blob.type, name: 'Memo' }, { file: Promise.reject(failure), env }),
+    ).rejects.toBe(failure)
+    expect(share).not.toHaveBeenCalled()
+    expect(anchors).toHaveLength(0)
   })
 })

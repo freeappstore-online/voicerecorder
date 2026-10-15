@@ -1,15 +1,15 @@
-import { type FormEvent, useCallback, useEffect, useState } from 'react'
+import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
 import { ConfirmDialog, EmptyState, Modal, Spinner, useToast } from '@freeappstore/sdk/ui'
 import {
   MAX_NAME_LENGTH,
   type RecordingMeta,
   cleanName,
-  fileNameFor,
   formatDuration,
   formatSize,
   library,
 } from './lib/library.ts'
-import { shareOrDownload } from './lib/share.ts'
+import { shareRecording } from './lib/share.ts'
+import { needsConversion, toPlayableFile } from './lib/export.ts'
 import { EFFECTS, type VoiceEffect, effectLabel, exportWithEffect, renderedLength } from './lib/effects.ts'
 import { EffectPlayer, Player, decode } from './Player.tsx'
 
@@ -245,11 +245,24 @@ function RecordingPanel({
     }
   }
 
+  // The file Share sends, prepared as soon as the audio is loaded: WebM/Ogg
+  // need converting to WAV, and Safari won't wait for that once tapped.
+  const converts = needsConversion(rec.mimeType)
+  const playable = useMemo(() => {
+    if (!blob) return null
+    const p = toPlayableFile({ blob, mimeType: rec.mimeType, name: rec.name })
+    p.catch(() => {}) // reported when Share is tapped
+    return p
+  }, [blob, rec.mimeType, rec.name])
+
   const share = async () => {
-    if (!blob) return
+    if (!blob || !playable) return
     try {
-      const outcome = await shareOrDownload(blob, fileNameFor(rec), rec.name)
-      if (outcome === 'downloaded') toast.show(`Downloaded ${fileNameFor(rec)}.`, { variant: 'success' })
+      const outcome = await shareRecording({ blob, mimeType: rec.mimeType, name: rec.name }, { file: playable })
+      if (outcome === 'downloaded') {
+        const file = await playable
+        toast.show(`Downloaded ${file.name}.`, { variant: 'success' })
+      }
     } catch (err) {
       toast.show(message(err, 'That recording could not be shared.'), { variant: 'error' })
     }
@@ -302,7 +315,13 @@ function RecordingPanel({
             {exporting ? 'Exporting…' : `Export as ${effectLabel(effect)}`}
           </button>
         )}
-        <button type="button" className="vr-btn" onClick={() => void share()} disabled={!blob}>
+        <button
+          type="button"
+          className="vr-btn"
+          onClick={() => void share()}
+          disabled={!blob}
+          aria-describedby={converts ? `share-note-${rec.id}` : undefined}
+        >
           Share
         </button>
         <button type="button" className="vr-btn" onClick={onRename}>
@@ -312,6 +331,11 @@ function RecordingPanel({
           Delete
         </button>
       </div>
+      {converts && (
+        <p id={`share-note-${rec.id}`} className="mt-2 text-sm text-[var(--muted)]">
+          Shared as a WAV file, so it plays on iPhone, in Chrome and in desktop players.
+        </p>
+      )}
     </>
   )
 }
