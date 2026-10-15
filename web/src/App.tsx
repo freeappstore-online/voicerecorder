@@ -67,32 +67,38 @@ function Screen({ path, navigate }: { path: string; navigate: (href: string) => 
             </h2>
             <ul className="mt-2 flex flex-col gap-2 text-[var(--muted)]">
               <li>
-                <strong className="text-[var(--ink)]">Your audio never leaves your device.</strong> Recording,
-                playback, effects and export all happen in your browser. Nothing is uploaded, and there's no
-                server that could receive it.
+                <strong className="text-[var(--ink)]">Your audio never leaves your device.</strong> Nothing is
+                uploaded: recording, playback, effects and export all happen on your device.
               </li>
               <li>
-                <strong className="text-[var(--ink)]">Recordings are stored on this device</strong>, in your
-                browser's IndexedDB storage for this site. Delete a recording and it's gone; clearing this
-                site's data in your browser removes them all. They aren't backed up or synced.
+                Voice Recorder uses your microphone only while you record, after your browser asks you for
+                permission. A recording is only sent anywhere when you tap Share and choose where it goes.
               </li>
               <li>
-                <strong className="text-[var(--ink)]">No account needed.</strong> You can use every feature
-                without signing in. Signing in is optional and only links you to your FreeAppStore profile; it
-                doesn't upload recordings.
+                Your recordings are stored on this device, in this browser's storage for the site
+                (IndexedDB). They aren't kept in your FreeAppStore account, backed up or synced. Deleting a
+                recording removes it; clearing this site's data removes them all.
               </li>
               <li>
-                <strong className="text-[var(--ink)]">Usage statistics.</strong> Like every FreeAppStore
-                app, this page loads the platform's analytics script (api.freeappstore.online/v1/analytics.js).
-                Each time you open a screen it sends a page-view event to api.freeappstore.online: the app
-                name, which screen, the page you came from, and the time. As with any web request, that
-                server also sees your IP address and browser. It sets no cookies; while you're offline it keeps
-                these events in this browser and sends them later. It never includes your audio, your
-                recordings or their names.
+                <strong className="text-[var(--ink)]">No account needed.</strong> Every feature works without
+                signing in, and signing in doesn't upload anything.
               </li>
               <li>
-                <strong className="text-[var(--ink)]">Microphone</strong>: used only while you record, after
-                your browser asks you for permission. Sharing a recording only happens when you tap Share.
+                Page-view counts: the app loads FreeAppStore's store analytics script
+                (api.freeappstore.online/v1/analytics.js), which records which screen you opened (for example
+                /recordings), the page that linked here, and the time. It's sent to FreeAppStore without
+                cookies and without your account, and held in this browser while you're offline. Your
+                recordings and their names are never included.
+              </li>
+              <li>
+                Voice Recorder is served via FreeAppStore, which also loads Cloudflare Web Analytics
+                (beacon.min.js from static.cloudflareinsights.com). It doesn't use cookies and reports only
+                aggregate page-view statistics, such as page load times and visit counts. As with any
+                website, the servers handling these requests see your IP address and browser type.
+              </li>
+              <li>
+                No ads, no tracking cookies and no advertising or tracking SDKs. The only third-party script
+                is the Cloudflare Web Analytics beacon above.
               </li>
             </ul>
           </section>

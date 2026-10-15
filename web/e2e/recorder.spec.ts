@@ -160,6 +160,7 @@ test('privacy disclosures are visible', async ({ page }) => {
   await expect(privacy).toContainText('IndexedDB')
   await expect(privacy).toContainText('api.freeappstore.online/v1/analytics.js')
   await expect(privacy).toContainText('No account needed.')
+  await expect(privacy).toContainText('static.cloudflareinsights.com')
 })
 
 async function readHead(stream: NodeJS.ReadableStream, bytes = 12): Promise<Buffer> {
