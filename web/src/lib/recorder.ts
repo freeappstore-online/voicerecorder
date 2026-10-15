@@ -169,7 +169,7 @@ export class Clock {
 // ---------------------------------------------------------------------------
 // Errors
 
-export type MicErrorKind = 'unsupported' | 'denied' | 'not-found' | 'busy' | 'unknown'
+export type MicErrorKind = 'unsupported' | 'denied' | 'blocked' | 'not-found' | 'busy' | 'unknown'
 
 export class MicError extends Error {
   readonly kind: MicErrorKind
@@ -180,13 +180,35 @@ export class MicError extends Error {
   }
 }
 
+type PolicyDoc = { permissionsPolicy?: { allowsFeature(f: string): boolean }; featurePolicy?: { allowsFeature(f: string): boolean } }
+
+/**
+ * False when the page itself isn't allowed the microphone (a Permissions-Policy
+ * header or iframe attribute): then no browser setting the person can change
+ * will help. Browsers that can't tell (Safari) report true.
+ */
+export function pageAllowsMicrophone(doc: PolicyDoc | undefined = typeof document !== 'undefined' ? (document as PolicyDoc) : undefined): boolean {
+  const policy = doc?.permissionsPolicy ?? doc?.featurePolicy
+  try {
+    return policy ? policy.allowsFeature('microphone') : true
+  } catch {
+    return true
+  }
+}
+
 /** Turns a getUserMedia failure into something a person can act on. */
-export function micError(err: unknown): MicError {
+export function micError(err: unknown, pageAllowsMic: boolean = pageAllowsMicrophone()): MicError {
   if (err instanceof MicError) return err
   const name = err instanceof Error ? err.name : ''
   switch (name) {
     case 'NotAllowedError':
     case 'SecurityError':
+      if (!pageAllowsMic) {
+        return new MicError(
+          'blocked',
+          "This site isn't allowed to use the microphone right now, so recording can't start. It's a setting on our side, not yours; please try again later.",
+        )
+      }
       return new MicError(
         'denied',
         'Microphone access is blocked. Allow it for this site in your browser settings, then try again.',

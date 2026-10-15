@@ -13,6 +13,7 @@ import {
   measure,
   meterPosition,
   micError,
+  pageAllowsMicrophone,
   pickMimeType,
   smoothLevel,
 } from './recorder.ts'
@@ -153,6 +154,17 @@ describe('Clock', () => {
   })
 })
 
+describe('pageAllowsMicrophone', () => {
+  it('reads Permissions Policy, falling back to Feature Policy, else assumes allowed', () => {
+    const allows = (v: boolean) => ({ allowsFeature: (f: string) => (f === 'microphone' ? v : true) })
+    expect(pageAllowsMicrophone({ permissionsPolicy: allows(false) })).toBe(false)
+    expect(pageAllowsMicrophone({ featurePolicy: allows(false) })).toBe(false)
+    expect(pageAllowsMicrophone({ featurePolicy: allows(true) })).toBe(true)
+    expect(pageAllowsMicrophone({})).toBe(true)
+    expect(pageAllowsMicrophone(undefined)).toBe(true)
+  })
+})
+
 describe('micError', () => {
   it.each([
     ['NotAllowedError', 'denied'],
@@ -162,6 +174,13 @@ describe('micError', () => {
     ['Weird', 'unknown'],
   ])('%s → %s', (name, kind) => {
     expect(micError(new DOMException('x', name)).kind).toBe(kind)
+  })
+
+  it('says when the page itself is barred from the mic (Permissions-Policy)', () => {
+    const err = micError(new DOMException('x', 'NotAllowedError'), false)
+    expect(err.kind).toBe('blocked')
+    expect(err.message).toMatch(/isn't allowed to use the microphone/)
+    expect(micError(new DOMException('x', 'NotAllowedError'), true).kind).toBe('denied')
   })
 
   it('passes MicErrors through', () => {

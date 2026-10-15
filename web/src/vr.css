@@ -540,5 +540,7 @@ h2[tabindex='-1']:focus { outline: none; }
     white-space: nowrap;
   }
   #root header > div:last-child { gap: 0.35rem !important; }
+}
+@media (max-width: 479px) {
   #root header > div:last-child > button:last-child { padding: 0.55rem 0.9rem !important; white-space: nowrap; }
 }
