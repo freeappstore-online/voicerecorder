@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { type CSSProperties, useEffect, useRef, useState } from 'react'
 import { formatDuration } from './lib/library.ts'
+import { Icon } from './ui.tsx'
 import {
   type EffectChain,
   type VoiceEffect,
@@ -51,32 +52,38 @@ function Transport({
   onToggle: () => void
   onSeek: (seconds: number) => void
 }) {
+  const shown = Math.min(time, duration)
+  const progress = duration > 0 ? (shown / duration) * 100 : 0
   return (
     <div className="flex items-center gap-3">
       <button
         type="button"
-        className="vr-btn vr-btn--primary min-w-20"
+        className="vr-play"
         onClick={onToggle}
         disabled={disabled}
         aria-label={playing ? `Pause ${label}` : `Play ${label}`}
       >
-        {playing ? 'Pause' : 'Play'}
+        <Icon name={playing ? 'pause' : 'play'} size={22} />
       </button>
-      <input
-        type="range"
-        className="vr-seek min-w-0 flex-1"
-        min={0}
-        max={duration || 0}
-        step={0.01}
-        value={Math.min(time, duration)}
-        disabled={disabled}
-        onChange={(e) => onSeek(Number(e.currentTarget.value))}
-        aria-label="Position"
-        aria-valuetext={`${formatDuration(time * 1000)} of ${formatDuration(duration * 1000)}`}
-      />
-      <span className="tabular-nums text-sm text-[var(--muted)]">
-        {formatDuration(time * 1000)} / {formatDuration(duration * 1000)}
-      </span>
+      <div className="min-w-0 flex-1">
+        <input
+          type="range"
+          className="vr-seek"
+          style={{ '--progress': `${progress}%` } as CSSProperties}
+          min={0}
+          max={duration || 0}
+          step={0.01}
+          value={shown}
+          disabled={disabled}
+          onChange={(e) => onSeek(Number(e.currentTarget.value))}
+          aria-label={`Position in ${label}`}
+          aria-valuetext={`${formatDuration(shown * 1000)} of ${formatDuration(duration * 1000)}`}
+        />
+        <div className="flex justify-between text-xs tabular-nums text-[var(--muted)]" aria-hidden="true">
+          <span>{formatDuration(shown * 1000)}</span>
+          <span>{formatDuration(duration * 1000)}</span>
+        </div>
+      </div>
     </div>
   )
 }

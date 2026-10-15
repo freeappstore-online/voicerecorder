@@ -205,7 +205,7 @@ class FakeMediaRecorder {
 
 function fakes(opts: { getUserMedia?: RecorderDeps['getUserMedia']; samples?: number[] } = {}) {
   let t = 0
-  const track = { stop: vi.fn() }
+  const track: { stop: ReturnType<typeof vi.fn>; onended: (() => void) | null } = { stop: vi.fn(), onended: null }
   const stream = { getTracks: () => [track] } as unknown as MediaStream
   const ctx = {
     state: 'running',
@@ -308,5 +308,19 @@ describe('Recorder', () => {
     await rec.start()
     rec.resume()
     expect(rec.state).toBe('recording')
+  })
+
+  it('reports when the system cuts the mic (iOS screen lock) and can still save', async () => {
+    const f = fakes()
+    const rec = new Recorder(f.deps)
+    const interrupted = vi.fn()
+    rec.onInterrupted = interrupted
+    await rec.start()
+    f.media().emit('a')
+    f.track.onended?.()
+    expect(interrupted).toHaveBeenCalledOnce()
+    expect(await (await rec.stop()).blob.text()).toBe('atail')
+    // Released tracks don't report again.
+    expect(f.track.onended).toBeNull()
   })
 })

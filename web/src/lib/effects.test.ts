@@ -12,6 +12,7 @@ import {
   buildEffectChain,
   createReverbImpulse,
   driveCurve,
+  effectFromName,
   safetyCurve,
   encodeWav,
   exportWithEffect,
@@ -271,5 +272,15 @@ describe('renderedLength', () => {
     expect(renderedLength(15_000, RATE, 'pitch-up')).toBe(10_000)
     expect(renderedLength(15_000, RATE, 'reverb')).toBe(15_000 + 2 * RATE)
     expect(renderedLength(0, RATE, 'none')).toBe(1)
+  })
+})
+
+describe('effectFromName', () => {
+  it('reads the effect from an export name', () => {
+    expect(effectFromName('Standup [Robot]')).toBe('robot')
+    expect(effectFromName('Standup [Chipmunk] ')).toBe('pitch-up')
+    expect(effectFromName('Standup')).toBeNull()
+    expect(effectFromName('Notes [draft]')).toBeNull()
+    expect(effectFromName('Standup [Original]')).toBeNull()
   })
 })

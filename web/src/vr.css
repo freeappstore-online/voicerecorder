@@ -1,0 +1,431 @@
+/* Voice Recorder UI. Built on the template's tokens in index.css (--accent,
+   --panel, ...) so it follows light/dark and the brand. Touch targets are at
+   least 44px. */
+
+.vr-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+:where(.vr-btn, .vr-play, .vr-round, .vr-record, .vr-card__head, .vr-segmented__option, .vr-link):focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* Buttons */
+.vr-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0 1rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--panel-strong);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.925rem;
+  font-weight: 650;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.vr-btn:hover:not(:disabled) { border-color: var(--accent); }
+.vr-btn:disabled { opacity: 0.5; cursor: default; }
+.vr-btn--primary {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+  color: #fff;
+  box-shadow: 0 6px 16px var(--glow-warm);
+}
+.vr-btn--primary:hover:not(:disabled) { border-color: transparent; filter: brightness(1.06); }
+:root[data-theme='dark'] .vr-btn--primary { background: var(--accent); color: #1a0f0b; }
+.vr-btn--danger { color: var(--danger); }
+.vr-btn--danger:hover:not(:disabled) {
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 8%, var(--panel-strong));
+}
+
+.vr-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0 0.5rem;
+  border-radius: var(--radius-sm);
+  color: var(--accent-deep);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+:root[data-theme='dark'] .vr-link { color: var(--accent); }
+
+.vr-input {
+  min-height: 44px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: max(16px, 1rem); /* below 16px iOS zooms the page on focus */
+}
+.vr-input:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+
+.vr-label {
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.vr-hint { font-size: 0.85rem; color: var(--muted); }
+.vr-hint[data-tone='warning'] { color: #8a5a12; font-weight: 650; }
+:root[data-theme='dark'] .vr-hint[data-tone='warning'] { color: var(--warning); }
+
+.vr-alert,
+.vr-note {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.9rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.vr-alert svg,
+.vr-note svg { flex: none; margin-top: 0.1rem; }
+.vr-alert {
+  border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
+  background: color-mix(in srgb, var(--danger) 8%, var(--panel-strong));
+}
+.vr-alert svg { color: var(--danger); }
+.vr-note {
+  border: 1px solid color-mix(in srgb, var(--sky) 35%, transparent);
+  background: var(--cool-gradient);
+}
+.vr-note svg { color: var(--sky-deep); }
+:root[data-theme='dark'] .vr-note svg { color: var(--sky); }
+
+.vr-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 44px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.vr-toggle input { flex: none; width: 1.25rem; height: 1.25rem; accent-color: var(--accent); }
+
+/* Record screen: the stage */
+.vr-stage {
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) * 1.5);
+  background: var(--warm-gradient);
+  box-shadow: var(--shadow-card);
+}
+.vr-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-strong);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.vr-pill__dot { width: 0.55rem; height: 0.55rem; border-radius: 999px; background: var(--muted); }
+.vr-pill[data-phase='recording'] .vr-pill__dot { background: var(--danger); animation: vr-blink 1.2s ease-in-out infinite; }
+.vr-pill[data-phase='paused'] .vr-pill__dot { background: var(--warning); }
+.vr-timer {
+  margin: 0.75rem 0 0.25rem;
+  text-align: center;
+  font-size: clamp(3rem, 14vw, 4.5rem);
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.vr-wave {
+  display: block;
+  width: 100%;
+  height: 5.5rem;
+  margin-top: 0.75rem;
+  color: var(--accent);
+}
+.vr-wave[data-live='false'] { color: var(--line-strong); }
+.vr-meter {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--line);
+}
+.vr-meter__fill {
+  height: 100%;
+  clip-path: inset(0 100% 0 0);
+  /* A fixed scale, revealed as the level rises: green, amber, then red near full scale. */
+  background: linear-gradient(90deg, var(--success) 0%, var(--success) 68%, var(--warning) 84%, var(--danger) 100%);
+  will-change: clip-path;
+}
+
+/* Record screen: controls */
+.vr-controls {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: clamp(1rem, 6vw, 2.5rem);
+}
+.vr-record,
+.vr-round {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.25rem;
+  border: 0;
+  border-radius: 1.25rem;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.vr-record:disabled,
+.vr-round:disabled { opacity: 0.55; cursor: default; }
+.vr-record__face {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(6.5rem, 30vw, 8rem);
+  height: clamp(6.5rem, 30vw, 8rem);
+  border-radius: 999px;
+  color: #fff;
+  background: radial-gradient(
+    circle at 35% 30%,
+    color-mix(in srgb, var(--danger) 70%, white),
+    var(--danger) 55%,
+    color-mix(in srgb, var(--danger) 75%, black)
+  );
+  box-shadow:
+    0 0 0 6px var(--panel-strong),
+    0 0 0 8px color-mix(in srgb, var(--danger) 35%, transparent),
+    0 16px 36px color-mix(in srgb, var(--danger) 35%, transparent);
+  transition: transform 160ms ease;
+}
+.vr-record:hover:not(:disabled) .vr-record__face { transform: scale(1.03); }
+.vr-record:active:not(:disabled) .vr-record__face { transform: scale(0.97); }
+.vr-record[data-live='recording'] .vr-record__face::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border: 3px solid var(--danger);
+  border-radius: inherit;
+  animation: vr-pulse 1.6s ease-out infinite;
+  pointer-events: none;
+}
+.vr-round { padding-top: 1.25rem; }
+.vr-round__face {
+  display: grid;
+  place-items: center;
+  width: 4rem;
+  height: 4rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--panel-strong);
+  box-shadow: var(--shadow-card);
+}
+.vr-round:hover:not(:disabled) .vr-round__face { border-color: var(--accent); }
+.vr-round--danger { color: var(--danger); }
+.vr-round--danger:hover:not(:disabled) .vr-round__face { border-color: var(--danger); }
+
+@keyframes vr-pulse {
+  0% { transform: scale(1); opacity: 0.75; }
+  100% { transform: scale(1.22); opacity: 0; }
+}
+@keyframes vr-blink {
+  50% { opacity: 0.25; }
+}
+
+/* Recordings: cards */
+.vr-card {
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) * 1.25);
+  background: var(--panel-strong);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.vr-card:hover { border-color: var(--line-strong); }
+.vr-card[data-open] {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  box-shadow: var(--shadow-card);
+}
+.vr-card__head {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  min-height: 4.5rem;
+  padding: 0.75rem 0.9rem;
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.vr-card__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.85rem;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+.vr-card__icon[data-kind='effect'] { background: var(--sky-soft); color: var(--sky-deep); }
+.vr-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0.4rem;
+  margin-top: 0.15rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.vr-tag {
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  background: var(--sky-soft);
+  color: var(--sky-deep);
+  font-weight: 700;
+}
+.vr-card__duration { flex: none; font-variant-numeric: tabular-nums; font-weight: 650; color: var(--muted); }
+.vr-card__chevron { flex: none; color: var(--muted); transition: transform 200ms ease; }
+.vr-card[data-open] .vr-card__chevron { transform: rotate(180deg); }
+.vr-card__panel { padding: 1rem 0.9rem 1.1rem; border-top: 1px solid var(--line); }
+.vr-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.1rem; }
+.vr-empty:focus,
+h2[tabindex='-1']:focus { outline: none; }
+
+/* Player */
+.vr-play {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 6px 16px var(--glow-warm);
+}
+:root[data-theme='dark'] .vr-play { background: var(--accent); color: #1a0f0b; }
+.vr-play:disabled { opacity: 0.5; cursor: default; }
+.vr-seek {
+  --progress: 0%;
+  width: 100%;
+  height: 28px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.vr-seek:disabled { cursor: default; opacity: 0.5; }
+.vr-seek::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent) var(--progress), var(--line-strong) var(--progress));
+}
+.vr-seek::-moz-range-track { height: 6px; border-radius: 999px; background: var(--line-strong); }
+.vr-seek::-moz-range-progress { height: 6px; border-radius: 999px; background: var(--accent); }
+.vr-seek::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  border: 3px solid var(--paper);
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+.vr-seek::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 3px solid var(--paper);
+  border-radius: 999px;
+  background: var(--accent);
+}
+.vr-seek:focus-visible { outline: none; }
+.vr-seek:focus-visible::-webkit-slider-thumb { outline: 3px solid var(--accent); outline-offset: 2px; }
+.vr-seek:focus-visible::-moz-range-thumb { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* Effect picker: a segmented control that wraps into a 4×2 grid on phones. */
+.vr-segmented {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: var(--paper-deep);
+}
+@media (min-width: 640px) {
+  .vr-segmented { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+}
+.vr-segmented__option {
+  min-height: 44px;
+  padding: 0 0.15rem;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0.75rem;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: clamp(0.72rem, 3.2vw, 0.82rem); /* "Chipmunk" fits a phone's 4-column grid */
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.vr-segmented__option:hover:not(:disabled):not([aria-checked='true']) { background: var(--panel-strong); }
+.vr-segmented__option[aria-checked='true'] {
+  background: var(--panel-strong);
+  color: var(--accent-deep);
+  font-weight: 800;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), inset 0 0 0 1.5px var(--accent);
+}
+:root[data-theme='dark'] .vr-segmented__option[aria-checked='true'] { color: var(--accent); }
+.vr-segmented__option:disabled { opacity: 0.5; cursor: default; }
+
+/* Respect "reduce motion": no pulsing, blinking, scaling or sliding. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .vr-record[data-live='recording'] .vr-record__face::after { animation: none; opacity: 0.6; }
+  .vr-pill[data-phase='recording'] .vr-pill__dot { animation: none; }
+  .vr-record:hover:not(:disabled) .vr-record__face,
+  .vr-record:active:not(:disabled) .vr-record__face,
+  button:active { transform: none; }
+}

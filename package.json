@@ -1,6 +1,6 @@
 {
   "name": "voicerecorder",
-  "description": "Coming soon — record your voice and change it with fun effects, all on your device",
+  "description": "Record your voice and change it with fun effects (chipmunk, robot, echo and more), all on your device",
   "private": true,
   "packageManager": "pnpm@10.30.3",
   "engines": {

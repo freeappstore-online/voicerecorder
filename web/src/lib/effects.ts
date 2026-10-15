@@ -26,6 +26,13 @@ export function effectLabel(effect: VoiceEffect): string {
   return EFFECTS.find((e) => e.id === effect)?.label ?? effect
 }
 
+/** The effect an exported recording was made with, read from its "Name [Effect]" suffix; null for originals. */
+export function effectFromName(name: string): VoiceEffect | null {
+  const label = /\[([^\]]+)\]\s*$/.exec(name)?.[1]
+  const match = EFFECTS.find((e) => e.id !== 'none' && e.label === label)
+  return match ? match.id : null
+}
+
 export interface EffectChain {
   input: AudioNode
   output: AudioNode

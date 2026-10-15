@@ -1,20 +1,29 @@
-import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { type FormEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { ConfirmDialog, EmptyState, Modal, Spinner, useToast } from '@freeappstore/sdk/ui'
 import {
   MAX_NAME_LENGTH,
   type RecordingMeta,
   cleanName,
+  extensionFor,
   formatDuration,
   formatSize,
   library,
 } from './lib/library.ts'
 import { shareRecording } from './lib/share.ts'
 import { needsConversion, toPlayableFile } from './lib/export.ts'
-import { EFFECTS, type VoiceEffect, effectLabel, exportWithEffect, renderedLength } from './lib/effects.ts'
+import {
+  type VoiceEffect,
+  effectFromName,
+  effectLabel,
+  exportWithEffect,
+  renderedLength,
+} from './lib/effects.ts'
+import { spokenDuration } from './lib/a11y.ts'
 import { EffectPlayer, Player, decode } from './Player.tsx'
+import { EffectPicker, Icon } from './ui.tsx'
 
 // The Recordings screen: every saved recording, newest first. Tap one to open
-// its player and actions (rename, share or download, delete).
+// its player, effects and actions (export, share, rename, delete).
 export function Recordings() {
   const toast = useToast()
   const [items, setItems] = useState<RecordingMeta[] | null>(null)
@@ -22,6 +31,10 @@ export function Recordings() {
   const [openId, setOpenId] = useState<string | null>(null)
   const [renaming, setRenaming] = useState<RecordingMeta | null>(null)
   const [deleting, setDeleting] = useState<RecordingMeta | null>(null)
+  const rowButtons = useRef(new Map<string, HTMLButtonElement>())
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  const emptyRef = useRef<HTMLDivElement>(null)
+  const pendingFocus = useRef<string | 'heading' | null>(null)
 
   const reload = useCallback(async () => {
     try {
@@ -42,34 +55,55 @@ export function Recordings() {
     return () => lib.removeEventListener('change', onChange)
   }, [reload])
 
+  // Focus moves after the list re-renders: dialogs close first, rows go away.
+  useEffect(() => {
+    const target = pendingFocus.current
+    if (!target) return
+    pendingFocus.current = null
+    const el =
+      target === 'heading' ? (headingRef.current ?? emptyRef.current) : (rowButtons.current.get(target) ?? headingRef.current)
+    requestAnimationFrame(() => el?.focus())
+  })
+  const focusSoon = (target: string | 'heading') => {
+    pendingFocus.current = target
+  }
+
   const confirmDelete = async () => {
     const target = deleting
     setDeleting(null)
-    if (!target) return
+    if (!target || !items) return
+    // Where focus lands afterwards: the next row, else the previous, else the heading.
+    const i = items.findIndex((r) => r.id === target.id)
+    const neighbour = items[i + 1] ?? items[i - 1]
     try {
       await library().remove(target.id)
       if (openId === target.id) setOpenId(null)
+      focusSoon(neighbour ? neighbour.id : 'heading')
       setItems((list) => list?.filter((r) => r.id !== target.id) ?? null)
       toast.show(`Deleted “${target.name}”.`, { variant: 'success' })
     } catch (err) {
+      focusSoon(target.id)
       toast.show(message(err, 'That recording could not be deleted.'), { variant: 'error' })
     }
   }
 
   if (loadError) {
     return (
-      <div role="alert" className="rounded-[var(--radius)] border border-[var(--line)] bg-[var(--panel)] p-4">
-        <p>{loadError}</p>
-        <button type="button" className="vr-btn mt-3" onClick={() => void reload()}>
-          Try again
-        </button>
+      <div role="alert" className="vr-alert">
+        <Icon name="info" />
+        <div>
+          <p>{loadError}</p>
+          <button type="button" className="vr-btn mt-3" onClick={() => void reload()}>
+            Try again
+          </button>
+        </div>
       </div>
     )
   }
 
   if (!items) {
     return (
-      <div className="flex justify-center p-8" aria-label="Loading recordings">
+      <div className="flex justify-center p-8" role="status" aria-label="Loading recordings">
         <Spinner />
       </div>
     )
@@ -77,24 +111,36 @@ export function Recordings() {
 
   if (items.length === 0) {
     return (
-      <EmptyState
-        title="No recordings yet"
-        message="Recordings you make are kept here, on this device only."
-      />
+      <div ref={emptyRef} tabIndex={-1} className="vr-empty">
+        <EmptyState
+          icon={<Icon name="mic" size={32} />}
+          title="No recordings yet"
+          message="Recordings you make are kept here, on this device only."
+        />
+      </div>
     )
   }
 
+  const totalBytes = items.reduce((sum, r) => sum + r.size, 0)
+
   return (
     <>
-      <p className="mb-3 text-sm text-[var(--muted)]">
-        {items.length === 1 ? '1 recording' : `${items.length} recordings`}, stored on this device only.
-      </p>
-      <ul className="flex flex-col gap-3">
+      <div className="mb-3 flex items-baseline justify-between gap-3">
+        <h2 ref={headingRef} tabIndex={-1} className="text-base font-semibold">
+          {items.length === 1 ? '1 recording' : `${items.length} recordings`}
+        </h2>
+        <p className="text-sm text-[var(--muted)]">{formatSize(totalBytes)} on this device</p>
+      </div>
+      <ul className="flex flex-col gap-3" aria-label="Recordings">
         {items.map((rec) => (
           <RecordingItem
             key={rec.id}
             rec={rec}
             open={openId === rec.id}
+            buttonRef={(el) => {
+              if (el) rowButtons.current.set(rec.id, el)
+              else rowButtons.current.delete(rec.id)
+            }}
             onToggle={() => setOpenId((id) => (id === rec.id ? null : rec.id))}
             onRename={() => setRenaming(rec)}
             onDelete={() => setDeleting(rec)}
@@ -104,10 +150,15 @@ export function Recordings() {
 
       <RenameDialog
         rec={renaming}
-        onClose={() => setRenaming(null)}
+        onClose={() => {
+          if (renaming) focusSoon(renaming.id)
+          setRenaming(null)
+        }}
         onRenamed={(updated) => {
+          focusSoon(updated.id)
           setItems((list) => list?.map((r) => (r.id === updated.id ? updated : r)) ?? null)
           setRenaming(null)
+          toast.show(`Renamed to “${updated.name}”.`, { variant: 'success' })
         }}
       />
 
@@ -118,7 +169,10 @@ export function Recordings() {
         confirmLabel="Delete"
         variant="danger"
         onConfirm={() => void confirmDelete()}
-        onCancel={() => setDeleting(null)}
+        onCancel={() => {
+          if (deleting) focusSoon(deleting.id)
+          setDeleting(null)
+        }}
       />
     </>
   )
@@ -127,40 +181,55 @@ export function Recordings() {
 function RecordingItem({
   rec,
   open,
+  buttonRef,
   onToggle,
   onRename,
   onDelete,
 }: {
   rec: RecordingMeta
   open: boolean
+  buttonRef: (el: HTMLButtonElement | null) => void
   onToggle: () => void
   onRename: () => void
   onDelete: () => void
 }) {
   const panelId = `rec-${rec.id}`
-  const date = new Date(rec.createdAt).toLocaleString(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  })
+  const made = effectFromName(rec.name)
+  const date = new Date(rec.createdAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+  const format = extensionFor(rec.mimeType).toUpperCase()
   return (
-    <li className="rounded-[var(--radius)] border border-[var(--line)] bg-[var(--panel)]">
+    <li className="vr-card" data-open={open || undefined}>
       <button
+        ref={buttonRef}
         type="button"
-        className="flex min-h-11 w-full items-center gap-3 rounded-[var(--radius)] p-4 text-left"
+        className="vr-card__head"
         aria-expanded={open}
-        aria-controls={panelId}
+        aria-controls={open ? panelId : undefined}
         onClick={onToggle}
       >
+        <span className="vr-card__icon" data-kind={made ? 'effect' : 'original'} aria-hidden="true">
+          <Icon name={made ? 'sparkle' : 'wave'} size={22} />
+        </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate font-semibold">{rec.name}</span>
-          <span className="block text-sm text-[var(--muted)]">
-            {date} · {formatSize(rec.size)}
+          <span className="vr-card__meta">
+            {made && <span className="vr-tag">{effectLabel(made)}</span>}
+            <span>{date}</span>
+            <span aria-hidden="true">·</span>
+            <span>
+              {format}, {formatSize(rec.size)}
+            </span>
           </span>
         </span>
-        <span className="tabular-nums text-[var(--muted)]">{formatDuration(rec.durationMs)}</span>
+        <span className="vr-card__duration">
+          <span className="vr-sr-only">Length </span>
+          <span aria-hidden="true">{formatDuration(rec.durationMs)}</span>
+          <span className="vr-sr-only">{spokenDuration(rec.durationMs)}</span>
+        </span>
+        <Icon name="chevron" className="vr-card__chevron" />
       </button>
       {open && (
-        <div id={panelId} className="border-t border-[var(--line)] p-4">
+        <div id={panelId} className="vr-card__panel">
           <RecordingPanel rec={rec} onRename={onRename} onDelete={onDelete} />
         </div>
       )}
@@ -182,6 +251,8 @@ function RecordingPanel({
   onDelete: () => void
 }) {
   const toast = useToast()
+  const fxLabelId = useId()
+  const shareNoteId = useId()
   const [blob, setBlob] = useState<Blob | null>(null)
   const [failed, setFailed] = useState(false)
   const [effect, setEffect] = useState<VoiceEffect>('none')
@@ -218,9 +289,7 @@ function RecordingPanel({
   const pick = (next: VoiceEffect) => {
     setEffect(next)
     if (next !== 'none') {
-      samples().catch(() =>
-        toast.show("This recording couldn't be opened for effects.", { variant: 'error' }),
-      )
+      samples().catch(() => toast.show("This recording couldn't be opened for effects.", { variant: 'error' }))
     }
   }
 
@@ -237,7 +306,7 @@ function RecordingPanel({
         durationMs,
         name: rec.name.slice(0, MAX_NAME_LENGTH - suffix.length).trim() + suffix,
       })
-      toast.show(`Saved “${saved.name}”.`, { variant: 'success' })
+      toast.show(`Saved “${saved.name}” to your recordings.`, { variant: 'success' })
     } catch (err) {
       toast.show(message(err, "The effect couldn't be exported."), { variant: 'error' })
     } finally {
@@ -281,37 +350,33 @@ function RecordingPanel({
           <EffectPlayer buffer={decoded} effect={effect} label={`${rec.name} as ${effectLabel(effect)}`} />
         )
       ) : (
-        <div className="flex justify-center p-2" aria-label="Loading audio">
+        <div className="flex justify-center p-2" role="status" aria-label="Loading audio">
           <Spinner size={20} />
         </div>
       )}
+
       <div className="mt-4">
-        <p id={`fx-${rec.id}`} className="mb-2 text-sm text-[var(--muted)]">
+        <p id={fxLabelId} className="vr-label">
           Voice effect
         </p>
-        <div role="group" aria-labelledby={`fx-${rec.id}`} className="flex flex-wrap gap-2">
-          {EFFECTS.map((e) => (
-            <button
-              key={e.id}
-              type="button"
-              className="vr-chip"
-              aria-pressed={effect === e.id}
-              disabled={!blob}
-              onClick={() => pick(e.id)}
-            >
-              {e.label}
-            </button>
-          ))}
-        </div>
+        <EffectPicker value={effect} onChange={pick} disabled={!blob || failed} labelId={fxLabelId} />
+        <p className="vr-hint mt-2">
+          {effect === 'none'
+            ? 'Pick an effect to hear it. Changing effect while playing carries on from the same spot.'
+            : `Playing as ${effectLabel(effect)}. Export saves it as a new recording.`}
+        </p>
       </div>
-      <div className="mt-4 flex flex-wrap gap-2">
+
+      <div className="vr-actions">
         {effect !== 'none' && (
           <button
             type="button"
-            className="vr-btn"
+            className="vr-btn vr-btn--primary"
             onClick={() => void exportEffect()}
             disabled={exporting || !blob}
+            aria-busy={exporting || undefined}
           >
+            {exporting ? <Spinner size={16} color="currentColor" /> : <Icon name="sparkle" size={18} />}
             {exporting ? 'Exporting…' : `Export as ${effectLabel(effect)}`}
           </button>
         )}
@@ -320,19 +385,22 @@ function RecordingPanel({
           className="vr-btn"
           onClick={() => void share()}
           disabled={!blob}
-          aria-describedby={converts ? `share-note-${rec.id}` : undefined}
+          aria-describedby={converts ? shareNoteId : undefined}
         >
+          <Icon name="share" size={18} />
           Share
         </button>
         <button type="button" className="vr-btn" onClick={onRename}>
+          <Icon name="pencil" size={18} />
           Rename
         </button>
         <button type="button" className="vr-btn vr-btn--danger" onClick={onDelete}>
+          <Icon name="trash" size={18} />
           Delete
         </button>
       </div>
       {converts && (
-        <p id={`share-note-${rec.id}`} className="mt-2 text-sm text-[var(--muted)]">
+        <p id={shareNoteId} className="vr-hint mt-2">
           Shared as a WAV file, so it plays on iPhone, in Chrome and in desktop players.
         </p>
       )}
@@ -350,6 +418,7 @@ function RenameDialog({
   onRenamed: (updated: RecordingMeta) => void
 }) {
   const toast = useToast()
+  const inputId = useId()
   const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -373,15 +442,16 @@ function RenameDialog({
   return (
     <Modal open={rec !== null} onClose={onClose} title="Rename recording">
       <form onSubmit={(e) => void submit(e)}>
-        <label htmlFor="rename-input" className="mb-1 block text-sm text-[var(--muted)]">
+        <label htmlFor={inputId} className="vr-label">
           Name
         </label>
         <input
-          id="rename-input"
+          id={inputId}
           className="vr-input w-full"
           value={name}
           maxLength={MAX_NAME_LENGTH}
           onChange={(e) => setName(e.currentTarget.value)}
+          onFocus={(e) => e.currentTarget.select()}
           autoFocus
           enterKeyHint="done"
         />

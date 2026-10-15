@@ -252,6 +252,12 @@ function browserDeps(): RecorderDeps {
 export class Recorder {
   state: RecorderState = 'inactive'
   readonly clock: Clock
+  /**
+   * Called when the system takes the microphone away mid-take: on iOS that's
+   * the screen locking, the app going to the background, or a phone call.
+   * The take so far can still be stopped and saved.
+   */
+  onInterrupted: (() => void) | null = null
   private readonly deps: RecorderDeps
   private stream: MediaStream | null = null
   private context: AudioContext | null = null
@@ -279,6 +285,11 @@ export class Recorder {
       throw micError(err)
     }
     this.stream = stream
+    for (const track of stream.getTracks()) {
+      track.onended = () => {
+        if (this.state !== 'inactive') this.onInterrupted?.()
+      }
+    }
     try {
       if (context.state === 'suspended') await context.resume().catch(() => {})
       const source = context.createMediaStreamSource(stream)
@@ -361,7 +372,10 @@ export class Recorder {
   }
 
   private release(): void {
-    this.stream?.getTracks().forEach((t) => t.stop())
+    this.stream?.getTracks().forEach((t) => {
+      t.onended = null
+      t.stop()
+    })
     this.stream = null
     this.analyser = null
     void this.context?.close().catch(() => {})
