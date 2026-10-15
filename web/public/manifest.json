@@ -1,7 +1,7 @@
 {
   "name": "Voice Recorder & Changer",
   "short_name": "Voice Recorder",
-  "description": "Coming soon — record your voice and change it with fun effects, all on your device",
+  "description": "Record your voice and change it with fun effects. Audio stays on your device.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "any",

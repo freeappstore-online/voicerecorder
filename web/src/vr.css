@@ -8,8 +8,7 @@
   height: 1px;
   padding: 0;
   margin: -1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
 }
@@ -428,4 +427,118 @@ h2[tabindex='-1']:focus { outline: none; }
   .vr-record:hover:not(:disabled) .vr-record__face,
   .vr-record:active:not(:disabled) .vr-record__face,
   button:active { transform: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   Record screen layout: fits the viewport without scrolling, from a 568×320
+   phone in landscape up. Sizes follow the viewport height; short landscape
+   screens get two columns (stage | controls).
+   --------------------------------------------------------------------------- */
+.vr-rec {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.6rem, 2.2vh, 1.5rem);
+}
+.vr-rec > .vr-stage,
+.vr-rec__side,
+.vr-rec__full { width: 100%; max-width: 32rem; }
+.vr-rec__side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.5rem, 2vh, 1.25rem);
+}
+.vr-stage { padding: clamp(0.7rem, 2.2vh, 1.25rem) clamp(0.9rem, 3vw, 1.25rem); }
+.vr-timer { margin: clamp(0.25rem, 1.2vh, 0.75rem) 0 0; font-size: clamp(2.1rem, min(14vw, 9.5vh), 4.5rem); }
+.vr-wave { height: clamp(2rem, 10vh, 5.5rem); margin-top: clamp(0.25rem, 1.2vh, 0.75rem); }
+.vr-meter { margin-top: clamp(0.4rem, 1.2vh, 0.75rem); }
+.vr-stage__hint { margin-top: 0.4rem; font-size: 0.8rem; }
+.vr-record__face { width: clamp(5.25rem, min(30vw, 15vh), 8rem); height: clamp(5.25rem, min(30vw, 15vh), 8rem); }
+.vr-record,
+.vr-round { gap: 0.4rem; }
+.vr-round { padding-top: clamp(0.5rem, 2vh, 1.25rem); }
+.vr-round__face { width: clamp(3.25rem, 8vh, 4rem); height: clamp(3.25rem, 8vh, 4rem); }
+
+.vr-fineprint {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  width: 100%;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: var(--muted);
+}
+.vr-fineprint p { display: flex; gap: 0.45rem; align-items: flex-start; }
+.vr-fineprint svg { flex: none; margin-top: 0.05rem; color: var(--sky-deep); }
+:root[data-theme='dark'] .vr-fineprint svg { color: var(--sky); }
+.vr-inline-link {
+  padding: 0 0.1rem;
+  border: 0;
+  background: none;
+  color: var(--accent-deep);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+:root[data-theme='dark'] .vr-inline-link { color: var(--accent); }
+.vr-inline-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.vr-more {
+  padding: 0.9rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--sky) 35%, transparent);
+  border-radius: var(--radius);
+  background: var(--cool-gradient);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+@media (orientation: landscape) and (max-height: 700px) and (min-width: 520px) {
+  .vr-rec {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    align-items: center;
+    max-width: 52rem;
+    margin: 0 auto;
+  }
+  .vr-rec > .vr-stage,
+  .vr-rec__side { max-width: none; }
+  .vr-rec__full { grid-column: 1 / -1; max-width: none; }
+  .vr-timer { font-size: clamp(2.1rem, 13vh, 4rem); }
+  .vr-wave { height: clamp(2rem, 14vh, 5rem); }
+  .vr-record__face { width: clamp(5rem, 28vh, 7rem); height: clamp(5rem, 28vh, 7rem); }
+}
+
+/* Short screens: the page description goes (the title stays); very short
+   ones keep the title for screen readers only. */
+@media (max-height: 599px) {
+  .fas-page-header__description { display: none; }
+  .fas-page-header { margin-bottom: 0.75rem; }
+}
+@media (max-height: 419px) {
+  .fas-page-header {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+/* The platform header on narrow phones: keep "Sign in" on one line and the
+   bar within the screen. The app name stays for screen readers. */
+@media (max-width: 379px) {
+  #root header { padding: 0.5rem 0.75rem !important; gap: 0.25rem; }
+  #root header > div:first-child { gap: 0.5rem !important; }
+  #root header > div:first-child > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  #root header > div:last-child { gap: 0.35rem !important; }
+  #root header > div:last-child > button:last-child { padding: 0.55rem 0.9rem !important; white-space: nowrap; }
 }

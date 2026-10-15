@@ -20,6 +20,10 @@
     "build": "pnpm --filter @voicerecorder/web build",
     "preview": "pnpm --filter @voicerecorder/web preview",
     "typecheck": "pnpm --filter @voicerecorder/web exec tsc -b",
-    "test": "pnpm --filter @voicerecorder/web test"
+    "test": "pnpm --filter @voicerecorder/web test",
+    "test:e2e": "pnpm --filter @voicerecorder/web test:e2e"
+  },
+  "devDependencies": {
+    "playwright": "^1.64.1"
   }
 }

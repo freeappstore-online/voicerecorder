@@ -12,7 +12,9 @@ freeappstore-online/platform#175.
 - Live: https://voicerecorder.freeappstore.online
 - Dev: `pnpm install && pnpm dev`
 - Build: `pnpm build`
-- Check: `fas check`
+- Check: `fas check`; layout: `fas screencheck` (Record must fit 568×320 to 1366×1024 without scrolling; on
+  Windows run `pnpm build` first and add `--skip-build`)
+- e2e: `pnpm test:e2e` (Playwright, Chromium fake mic; record, play, effect, export, offline, privacy)
 - Deploy: `git push origin main` (auto-deploys to R2 via GitHub Actions)
 
 ## Notes

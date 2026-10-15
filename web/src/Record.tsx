@@ -24,8 +24,9 @@ const SPOKEN_UPDATES_KEY = 'voicerecorder.spokenUpdates'
 
 // The Record screen: one big button to start, then a stage with the elapsed
 // time, a scrolling waveform and a level meter, and controls to pause, stop
-// and save, or discard. Stopping saves to the library.
-export function Record({ onOpenRecordings }: { onOpenRecordings: () => void }) {
+// and save, or discard. Stopping saves to the library. Laid out to fit the
+// viewport without scrolling, from a small phone in landscape up (vr.css).
+export function Record({ navigate }: { navigate: (href: string) => void }) {
   const toast = useToast()
   const [phase, setPhase] = useState<Phase>('idle')
   const [error, setError] = useState<MicError | null>(null)
@@ -41,7 +42,8 @@ export function Record({ onOpenRecordings }: { onOpenRecordings: () => void }) {
   const waveRef = useRef(new WaveformHistory(WAVE_BARS))
   const spokenRef = useRef(spoken)
   const stopRef = useRef<(reason?: string) => void>(() => {})
-  const ids = { note: useId(), spokenHint: useId() }
+  const ids = { note: useId(), spokenHint: useId(), more: useId() }
+  const [more, setMore] = useState(false)
 
   const live = phase === 'recording' || phase === 'paused'
   const say = (text: string) => setAnnouncement((a) => ({ text, n: a.n + 1 }))
@@ -196,15 +198,15 @@ export function Record({ onOpenRecordings }: { onOpenRecordings: () => void }) {
     phase === 'recording' ? 'Recording' : phase === 'paused' ? 'Paused' : phase === 'saving' ? 'Saving…' : phase === 'starting' ? 'Starting…' : 'Ready'
 
   return (
-    <div className="flex flex-col items-center gap-6">
+    <div className="vr-rec">
       {error && (
-        <div role="alert" className="vr-alert w-full max-w-lg">
+        <div role="alert" className="vr-alert vr-rec__full">
           <Icon name="info" />
           <p>{error.message}</p>
         </div>
       )}
 
-      <section className="vr-stage w-full max-w-lg" aria-label="Recording">
+      <section className="vr-stage" aria-label="Recording">
         <div className="flex items-center justify-between gap-3">
           <span className="vr-pill" data-phase={phase}>
             <span className="vr-pill__dot" aria-hidden="true" />
@@ -227,91 +229,116 @@ export function Record({ onOpenRecordings }: { onOpenRecordings: () => void }) {
           aria-valuemax={100}
           aria-valuenow={0}
           aria-valuetext="Level: silent"
-          className="vr-meter mt-3"
+          className="vr-meter"
         >
           <div ref={meterFillRef} className="vr-meter__fill" />
         </div>
 
-        <p className="vr-hint mt-2" data-tone={tooLoud && phase === 'recording' ? 'warning' : undefined}>
+        <p className="vr-hint vr-stage__hint" data-tone={tooLoud && phase === 'recording' ? 'warning' : undefined}>
           {tooLoud && phase === 'recording'
             ? 'Too loud: move back from the mic a little.'
             : live
               ? 'Speak normally; the meter should sit in the green.'
-              : 'Your browser asks to use the microphone the first time.'}
+              : 'Your browser asks for the mic the first time.'}
         </p>
       </section>
 
-      {live || phase === 'saving' ? (
-        <div className="vr-controls" role="group" aria-label="Recording controls">
-          <button type="button" className="vr-round" onClick={pauseResume} disabled={phase === 'saving'}>
-            <span className="vr-round__face">
-              <Icon name={phase === 'paused' ? 'resume' : 'pause'} size={24} />
-            </span>
-            {phase === 'paused' ? 'Resume' : 'Pause'}
-          </button>
+      <div className="vr-rec__side">
+        {live || phase === 'saving' ? (
+          <div className="vr-controls" role="group" aria-label="Recording controls">
+            <button type="button" className="vr-round" onClick={pauseResume} disabled={phase === 'saving'}>
+              <span className="vr-round__face">
+                <Icon name={phase === 'paused' ? 'resume' : 'pause'} size={24} />
+              </span>
+              {phase === 'paused' ? 'Resume' : 'Pause'}
+            </button>
+            <button
+              type="button"
+              className="vr-record"
+              data-live={phase}
+              onClick={() => void stop()}
+              disabled={phase === 'saving'}
+            >
+              <span className="vr-record__face">
+                <Icon name="stop" size={36} />
+              </span>
+              Stop &amp; save
+            </button>
+            <button type="button" className="vr-round vr-round--danger" onClick={discard} disabled={phase === 'saving'}>
+              <span className="vr-round__face">
+                <Icon name="trash" size={22} />
+              </span>
+              Discard
+            </button>
+          </div>
+        ) : (
           <button
             type="button"
             className="vr-record"
-            data-live={phase}
-            onClick={() => void stop()}
-            disabled={phase === 'saving'}
+            onClick={() => void start()}
+            disabled={phase !== 'idle'}
+            aria-describedby={ids.note}
           >
             <span className="vr-record__face">
-              <Icon name="stop" size={36} />
+              <Icon name="mic" size={40} />
             </span>
-            Stop &amp; save
+            {phase === 'starting' ? 'Starting…' : 'Record'}
           </button>
-          <button type="button" className="vr-round vr-round--danger" onClick={discard} disabled={phase === 'saving'}>
-            <span className="vr-round__face">
-              <Icon name="trash" size={22} />
+        )}
+
+        <div className="vr-fineprint">
+          <p>
+            <Icon name="lock" size={16} />
+            <span>
+              Audio stays on your device.{' '}
+              <button type="button" className="vr-inline-link" onClick={() => navigate('/about')}>
+                Privacy
+              </button>
             </span>
-            Discard
-          </button>
+          </p>
+          <p role="note" id={ids.note}>
+            <Icon name="info" size={16} />
+            <span>
+              On iPhone and iPad, recording stops if the screen locks.{' '}
+              <button
+                type="button"
+                className="vr-inline-link"
+                aria-expanded={more}
+                aria-controls={ids.more}
+                onClick={() => setMore((m) => !m)}
+              >
+                {more ? 'Less' : 'More'}
+              </button>
+            </span>
+          </p>
         </div>
-      ) : (
-        <button
-          type="button"
-          className="vr-record"
-          onClick={() => void start()}
-          disabled={phase !== 'idle'}
-          aria-describedby={ids.note}
-        >
-          <span className="vr-record__face">
-            <Icon name="mic" size={40} />
-          </span>
-          {phase === 'starting' ? 'Starting…' : 'Record'}
-        </button>
-      )}
-
-      <aside role="note" id={ids.note} className="vr-note w-full max-w-lg" aria-label="About recording on iPhone and iPad">
-        <Icon name="info" />
-        <p>
-          <strong>On iPhone and iPad,</strong> recording stops if the screen locks or you switch apps, and
-          it can't record in the background. Voice Recorder keeps the screen awake while recording where it
-          can, and if a take is cut short, what was recorded is saved.
-        </p>
-      </aside>
-
-      <div className="w-full max-w-lg">
-        <label className="vr-toggle">
-          <input
-            type="checkbox"
-            checked={spoken}
-            onChange={(e) => setSpoken(e.currentTarget.checked)}
-            aria-describedby={ids.spokenHint}
-          />
-          <span>Speak time and level while recording</span>
-        </label>
-        <p id={ids.spokenHint} className="vr-hint mt-1 pl-8">
-          For screen readers: every 30 seconds, and when the level changes. Use headphones, or the
-          microphone may record the speech.
-        </p>
       </div>
 
-      <button type="button" className="vr-link" onClick={onOpenRecordings}>
-        <Icon name="list" size={18} />
-        Go to your recordings
-      </button>
+      {more && (
+        <div id={ids.more} className="vr-more vr-rec__full">
+          <p>
+            Browsers on iPhone and iPad can't record in the background. Voice Recorder keeps the screen
+            awake while recording where it can, and if a take is cut short, what was recorded is saved.
+          </p>
+          <label className="vr-toggle mt-3">
+            <input
+              type="checkbox"
+              checked={spoken}
+              onChange={(e) => setSpoken(e.currentTarget.checked)}
+              aria-describedby={ids.spokenHint}
+            />
+            <span>Speak time and level while recording</span>
+          </label>
+          <p id={ids.spokenHint} className="vr-hint mt-1 pl-8">
+            For screen readers: every 30 seconds, and when the level changes. Use headphones, or the
+            microphone may record the speech.
+          </p>
+          <button type="button" className="vr-link mt-2" onClick={() => navigate('/recordings')}>
+            <Icon name="list" size={18} />
+            Go to your recordings
+          </button>
+        </div>
+      )}
 
       <SrOnly live="polite">
         {announcement.text}
