@@ -9,7 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@freeappstore/sdk": "^0.14.30",
+    "@fontsource-variable/fraunces": "^5.3.0",
+    "@fontsource-variable/manrope": "^5.3.0",
+    "@freeappstore/sdk": "^0.14.36",
     "react": "^19.2.5",
     "react-dom": "^19.2.5"
   },

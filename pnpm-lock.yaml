@@ -10,9 +10,15 @@ importers:
 
   web:
     dependencies:
+      '@fontsource-variable/fraunces':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource-variable/manrope':
+        specifier: ^5.3.0
+        version: 5.3.0
       '@freeappstore/sdk':
-        specifier: ^0.14.30
-        version: 0.14.35(react@19.2.7)
+        specifier: ^0.14.36
+        version: 0.14.36(react@19.2.7)
       react:
         specifier: ^19.2.5
         version: 19.2.7
@@ -563,8 +569,14 @@ packages:
   '@emnapi/wasi-threads@1.2.1':
     resolution: {integrity: sha512-uTII7OYF+/Mes/MrcIOYp5yOtSMLBWSIoLPpcgwipoiKbli6k322tcoFsxoIIxPDqW01SQGAgko4EzZi2BNv2w==}
 
-  '@freeappstore/sdk@0.14.35':
-    resolution: {integrity: sha512-sZDPZy1PvCSBrpcGxjyH3pbB94l04dbLF7KpPY03L98DRKJtG77ubzuZS3y1jCYWEhwnUOb6lojcxvSmExMKKA==}
+  '@fontsource-variable/fraunces@5.3.0':
+    resolution: {integrity: sha512-9BYGySn4AHEJdgp9Z28tQ3X+laJMEOITXkQarZXeloWQZDq5oOvXJ3kDA8c7MGIfpogIaZfjrQBqmda8POOCKA==}
+
+  '@fontsource-variable/manrope@5.3.0':
+    resolution: {integrity: sha512-6D5dgokHsWDDMtmXHznKa0hK229NN+1a4BLPmUCLqcO1Pw5EEhWY5RFt0AcXnVRAljFFPfRtLkJePQj6LSsV6g==}
+
+  '@freeappstore/sdk@0.14.36':
+    resolution: {integrity: sha512-Ud4qy2nzS6OjaYZuEARLBIzsJx3ol7vCkfPke6aKJE70lkmcvXMzZPfz80hvRykzw123twCrULVavb7l2VDAuw==}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
     peerDependenciesMeta:
@@ -2756,7 +2768,11 @@ snapshots:
       tslib: 2.8.1
     optional: true
 
-  '@freeappstore/sdk@0.14.35(react@19.2.7)':
+  '@fontsource-variable/fraunces@5.3.0': {}
+
+  '@fontsource-variable/manrope@5.3.0': {}
+
+  '@freeappstore/sdk@0.14.36(react@19.2.7)':
     optionalDependencies:
       react: 19.2.7
 

@@ -1,10 +1,11 @@
 {
-  "name": "voicerecorder",
-  "short_name": "voicerecorder",
-  "description": "Free voicerecorder app — part of FreeAppStore",
+  "name": "Voice Recorder & Changer",
+  "short_name": "Voice Recorder",
+  "description": "Coming soon — record your voice and change it with fun effects, all on your device",
   "start_url": "/",
   "display": "standalone",
   "orientation": "any",
+  "min_viewport_width": 320,
   "background_color": "#ffffff",
   "theme_color": "#111111",
   "icons": [
