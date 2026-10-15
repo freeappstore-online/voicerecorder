@@ -2,8 +2,9 @@
 
 Voice Recorder & Changer: record your voice and change it with effects, on FreeAppStore. Audio
 never leaves the device. Recording engine in `web/src/lib/recorder.ts`
-(MediaRecorder + Web Audio meter); library in `web/src/lib/library.ts` (IndexedDB). Effects not
-built yet. Tests: `pnpm test` (vitest). See
+(MediaRecorder + Web Audio meter); library in `web/src/lib/library.ts` (IndexedDB); effects in
+`web/src/lib/effects.ts` (live Web Audio chains, OfflineAudioContext → WAV export). Tests:
+`pnpm test` (vitest; effects render through node-web-audio-api). See
 freeappstore-online/platform#175.
 
 - Live: https://voicerecorder.freeappstore.online

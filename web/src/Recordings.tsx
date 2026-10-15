@@ -1,4 +1,4 @@
-import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
+import { type FormEvent, useCallback, useEffect, useState } from 'react'
 import { ConfirmDialog, EmptyState, Modal, Spinner, useToast } from '@freeappstore/sdk/ui'
 import {
   MAX_NAME_LENGTH,
@@ -10,6 +10,8 @@ import {
   library,
 } from './lib/library.ts'
 import { shareOrDownload } from './lib/share.ts'
+import { EFFECTS, type VoiceEffect, effectLabel, exportWithEffect, renderedLength } from './lib/effects.ts'
+import { EffectPlayer, Player, decode } from './Player.tsx'
 
 // The Recordings screen: every saved recording, newest first. Tap one to open
 // its player and actions (rename, share or download, delete).
@@ -166,9 +168,10 @@ function RecordingItem({
   )
 }
 
-// Player and actions for an opened recording. The audio is loaded once, when
-// the panel opens, so Share can hand it to the share sheet without waiting on
-// the database (Safari only shares during the tap itself).
+// Player, effects and actions for an opened recording. The audio is loaded
+// once, when the panel opens, so Share can hand it to the share sheet without
+// waiting on the database (Safari only shares during the tap itself). It's
+// decoded to samples only when an effect is first picked.
 function RecordingPanel({
   rec,
   onRename,
@@ -181,6 +184,10 @@ function RecordingPanel({
   const toast = useToast()
   const [blob, setBlob] = useState<Blob | null>(null)
   const [failed, setFailed] = useState(false)
+  const [effect, setEffect] = useState<VoiceEffect>('none')
+  const [decoded, setDecoded] = useState<AudioBuffer | null>(null)
+  const [decoding, setDecoding] = useState<Promise<AudioBuffer> | null>(null)
+  const [exporting, setExporting] = useState(false)
 
   useEffect(() => {
     let live = true
@@ -196,6 +203,47 @@ function RecordingPanel({
       live = false
     }
   }, [rec.id])
+
+  // Decodes once, on demand. Called from a tap, so iOS lets audio start.
+  const samples = (): Promise<AudioBuffer> => {
+    if (decoded) return Promise.resolve(decoded)
+    if (decoding) return decoding
+    if (!blob) return Promise.reject(new Error('The audio is still loading.'))
+    const p = decode(blob)
+    setDecoding(p)
+    p.then(setDecoded, () => setDecoding(null))
+    return p
+  }
+
+  const pick = (next: VoiceEffect) => {
+    setEffect(next)
+    if (next !== 'none') {
+      samples().catch(() =>
+        toast.show("This recording couldn't be opened for effects.", { variant: 'error' }),
+      )
+    }
+  }
+
+  const exportEffect = async () => {
+    if (effect === 'none') return
+    setExporting(true)
+    try {
+      const buffer = await samples()
+      const wav = await exportWithEffect(buffer, effect)
+      const durationMs = (renderedLength(buffer.length, buffer.sampleRate, effect) / buffer.sampleRate) * 1000
+      const suffix = ` [${effectLabel(effect)}]`
+      const saved = await library().save({
+        blob: wav,
+        durationMs,
+        name: rec.name.slice(0, MAX_NAME_LENGTH - suffix.length).trim() + suffix,
+      })
+      toast.show(`Saved “${saved.name}”.`, { variant: 'success' })
+    } catch (err) {
+      toast.show(message(err, "The effect couldn't be exported."), { variant: 'error' })
+    } finally {
+      setExporting(false)
+    }
+  }
 
   const share = async () => {
     if (!blob) return
@@ -214,13 +262,46 @@ function RecordingPanel({
           This recording's audio could not be loaded.
         </p>
       ) : blob ? (
-        <Player blob={blob} durationMs={rec.durationMs} label={rec.name} />
+        effect === 'none' ? (
+          <Player blob={blob} durationMs={rec.durationMs} label={rec.name} />
+        ) : (
+          <EffectPlayer buffer={decoded} effect={effect} label={`${rec.name} as ${effectLabel(effect)}`} />
+        )
       ) : (
         <div className="flex justify-center p-2" aria-label="Loading audio">
           <Spinner size={20} />
         </div>
       )}
+      <div className="mt-4">
+        <p id={`fx-${rec.id}`} className="mb-2 text-sm text-[var(--muted)]">
+          Voice effect
+        </p>
+        <div role="group" aria-labelledby={`fx-${rec.id}`} className="flex flex-wrap gap-2">
+          {EFFECTS.map((e) => (
+            <button
+              key={e.id}
+              type="button"
+              className="vr-chip"
+              aria-pressed={effect === e.id}
+              disabled={!blob}
+              onClick={() => pick(e.id)}
+            >
+              {e.label}
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="mt-4 flex flex-wrap gap-2">
+        {effect !== 'none' && (
+          <button
+            type="button"
+            className="vr-btn"
+            onClick={() => void exportEffect()}
+            disabled={exporting || !blob}
+          >
+            {exporting ? 'Exporting…' : `Export as ${effectLabel(effect)}`}
+          </button>
+        )}
         <button type="button" className="vr-btn" onClick={() => void share()} disabled={!blob}>
           Share
         </button>
@@ -232,86 +313,6 @@ function RecordingPanel({
         </button>
       </div>
     </>
-  )
-}
-
-// Play/pause plus a seek bar. MediaRecorder WebM files (Chrome) often report
-// an Infinity duration, so the saved duration stands in until the browser
-// knows better.
-function Player({ blob, durationMs, label }: { blob: Blob; durationMs: number; label: string }) {
-  const audioRef = useRef<HTMLAudioElement>(null)
-  const [url, setUrl] = useState<string | null>(null)
-  const [playing, setPlaying] = useState(false)
-  const [time, setTime] = useState(0)
-  const [duration, setDuration] = useState(durationMs / 1000)
-
-  useEffect(() => {
-    const u = URL.createObjectURL(blob)
-    setUrl(u)
-    return () => URL.revokeObjectURL(u)
-  }, [blob])
-
-  const toggle = () => {
-    const audio = audioRef.current
-    if (!audio) return
-    if (audio.paused) {
-      if (audio.ended || audio.currentTime >= duration) audio.currentTime = 0
-      void audio.play().catch(() => setPlaying(false))
-    } else {
-      audio.pause()
-    }
-  }
-
-  const seek = (seconds: number) => {
-    const audio = audioRef.current
-    if (!audio) return
-    audio.currentTime = seconds
-    setTime(seconds)
-  }
-
-  const onMetadata = () => {
-    const d = audioRef.current?.duration
-    if (d && Number.isFinite(d)) setDuration(d)
-  }
-
-  return (
-    <div className="flex items-center gap-3">
-      {url && (
-        <audio
-          ref={audioRef}
-          src={url}
-          preload="metadata"
-          onLoadedMetadata={onMetadata}
-          onDurationChange={onMetadata}
-          onPlay={() => setPlaying(true)}
-          onPause={() => setPlaying(false)}
-          onEnded={() => setPlaying(false)}
-          onTimeUpdate={() => setTime(audioRef.current?.currentTime ?? 0)}
-        />
-      )}
-      <button
-        type="button"
-        className="vr-btn vr-btn--primary min-w-20"
-        onClick={toggle}
-        aria-label={playing ? `Pause ${label}` : `Play ${label}`}
-      >
-        {playing ? 'Pause' : 'Play'}
-      </button>
-      <input
-        type="range"
-        className="vr-seek min-w-0 flex-1"
-        min={0}
-        max={duration || 0}
-        step={0.01}
-        value={Math.min(time, duration)}
-        onChange={(e) => seek(Number(e.currentTarget.value))}
-        aria-label="Position"
-        aria-valuetext={`${formatDuration(time * 1000)} of ${formatDuration(duration * 1000)}`}
-      />
-      <span className="tabular-nums text-sm text-[var(--muted)]">
-        {formatDuration(time * 1000)} / {formatDuration(duration * 1000)}
-      </span>
-    </div>
   )
 }
 

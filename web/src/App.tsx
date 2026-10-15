@@ -57,9 +57,9 @@ function Screen({ path, navigate }: { path: string; navigate: (href: string) => 
           <PageHeader title="About" />
           <p className="text-[var(--muted)]">
             Voice Recorder records your voice with one big button, keeps your recordings on this
-            device, and lets you play, rename, share or download them. Your audio never leaves your
-            device. Voice effects (chipmunk, deep, robot, echo, reverb, radio and reverse) are coming
-            soon.
+            device, and lets you play, rename, share or download them. Play any recording back as a
+            chipmunk, deep, robot, echo, reverb, radio or reversed voice, and export the result as a
+            new WAV file. Your audio never leaves your device.
           </p>
           <p className="mt-4 text-[var(--muted)]">
             Voice Recorder is a free, MIT-licensed app on{' '}

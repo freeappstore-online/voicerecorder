@@ -298,3 +298,19 @@ a:focus-visible {
   background: linear-gradient(90deg, var(--success) 0%, var(--success) 70%, var(--warning) 85%, var(--danger) 100%);
   will-change: transform;
 }
+
+/* Effect picker. */
+.vr-chip {
+  min-height: 44px;
+  padding: 0 0.9rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--panel-strong);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.vr-chip:hover:not(:disabled) { border-color: var(--accent); }
+.vr-chip:disabled { opacity: 0.5; cursor: default; }
+.vr-chip[aria-pressed='true'] { border-color: var(--accent); background: var(--accent-soft); font-weight: 700; }
