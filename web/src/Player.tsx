@@ -252,7 +252,8 @@ export function EffectPlayer({
       halt(false)
       setPlaying(false)
     } else {
-      play(time >= duration - 0.05 ? 0 : time)
+      // Too close to the end to hear anything: start over.
+      play(time >= duration - 0.25 ? 0 : time)
     }
   }
 
