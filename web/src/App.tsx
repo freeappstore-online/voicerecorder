@@ -55,7 +55,7 @@ function Screen({ path, navigate }: { path: string; navigate: (href: string) => 
       return (
         <>
           <PageHeader title="About" />
-          <p className="text-[var(--muted)]">
+          <p className="text-muted">
             Voice Recorder records your voice with one big button, keeps your recordings on this
             device, and lets you play, rename, share or download them. Play any recording back as a
             chipmunk, deep, robot, echo, reverb, radio or reversed voice, and export the result as a
@@ -65,9 +65,9 @@ function Screen({ path, navigate }: { path: string; navigate: (href: string) => 
             <h2 id="privacy-title" className="text-lg font-bold">
               Privacy
             </h2>
-            <ul className="mt-2 flex flex-col gap-2 text-[var(--muted)]">
+            <ul className="mt-2 flex flex-col gap-2 text-muted">
               <li>
-                <strong className="text-[var(--ink)]">Your audio never leaves your device.</strong> Nothing is
+                <strong className="text-ink">Your audio never leaves your device.</strong> Nothing is
                 uploaded: recording, playback, effects and export all happen on your device.
               </li>
               <li>
@@ -80,7 +80,7 @@ function Screen({ path, navigate }: { path: string; navigate: (href: string) => 
                 recording removes it; clearing this site's data removes them all.
               </li>
               <li>
-                <strong className="text-[var(--ink)]">No account needed.</strong> Every feature works without
+                <strong className="text-ink">No account needed.</strong> Every feature works without
                 signing in, and signing in doesn't upload anything.
               </li>
               <li>
@@ -102,7 +102,7 @@ function Screen({ path, navigate }: { path: string; navigate: (href: string) => 
               </li>
             </ul>
           </section>
-          <p className="mt-6 text-[var(--muted)]">
+          <p className="mt-6 text-muted">
             Voice Recorder is a free, MIT-licensed app on{' '}
             <a href="https://freeappstore.online" className="underline">
               FreeAppStore

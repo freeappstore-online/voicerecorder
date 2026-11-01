@@ -2,6 +2,34 @@
    --panel, ...) so it follows light/dark and the brand. Touch targets are at
    least 44px. */
 
+/* Buttons */
+
+/* Record screen: the stage */
+
+/* Record screen: controls */
+
+/* Recordings: cards */
+
+/* Player */
+
+/* Effect picker: a segmented control that wraps into a 4×2 grid on phones. */
+
+/* Respect "reduce motion": no pulsing, blinking, scaling or sliding. */
+
+/* ---------------------------------------------------------------------------
+   Record screen layout: fits the viewport without scrolling, from a 568×320
+   phone in landscape up. Sizes follow the viewport height; short landscape
+   screens get two columns (stage | controls).
+   --------------------------------------------------------------------------- */
+
+/* Short screens: the page description goes (the title stays); very short
+   ones keep the title for screen readers only. */
+
+/* The platform header on narrow phones: keep "Sign in" on one line and the
+   bar within the screen. The app name stays for screen readers. */
+
+@layer components {
+
 .vr-sr-only {
   position: absolute;
   width: 1px;
@@ -17,8 +45,6 @@
   outline: 3px solid var(--accent);
   outline-offset: 3px;
 }
-
-/* Buttons */
 .vr-btn {
   display: inline-flex;
   align-items: center;
@@ -40,12 +66,11 @@
 .vr-btn:disabled { opacity: 0.5; cursor: default; }
 .vr-btn--primary {
   border-color: transparent;
-  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
-  color: #fff;
+  background: var(--vr-btn-primary-background);
+  color: var(--vr-btn-primary-color);
   box-shadow: 0 6px 16px var(--glow-warm);
 }
 .vr-btn--primary:hover:not(:disabled) { border-color: transparent; filter: brightness(1.06); }
-:root[data-theme='dark'] .vr-btn--primary { background: var(--accent); color: #1a0f0b; }
 .vr-btn--danger { color: var(--danger); }
 .vr-btn--danger:hover:not(:disabled) {
   border-color: var(--danger);
@@ -59,12 +84,11 @@
   min-height: 44px;
   padding: 0 0.5rem;
   border-radius: var(--radius-sm);
-  color: var(--accent-deep);
+  color: var(--vr-link-color);
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-:root[data-theme='dark'] .vr-link { color: var(--accent); }
 
 .vr-input {
   min-height: 44px;
@@ -87,8 +111,7 @@
   color: var(--muted);
 }
 .vr-hint { font-size: 0.85rem; color: var(--muted); }
-.vr-hint[data-tone='warning'] { color: #8a5a12; font-weight: 650; }
-:root[data-theme='dark'] .vr-hint[data-tone='warning'] { color: var(--warning); }
+.vr-hint[data-tone='warning'] { color: var(--vr-hint-data-tone-warning-color); font-weight: 650; }
 
 .vr-alert,
 .vr-note {
@@ -112,8 +135,7 @@
   border: 1px solid color-mix(in srgb, var(--sky) 35%, transparent);
   background: var(--cool-gradient);
 }
-.vr-note svg { color: var(--sky-deep); }
-:root[data-theme='dark'] .vr-note svg { color: var(--sky); }
+.vr-note svg { color: var(--vr-note-svg-color); }
 
 .vr-toggle {
   display: flex;
@@ -124,8 +146,6 @@
   cursor: pointer;
 }
 .vr-toggle input { flex: none; width: 1.25rem; height: 1.25rem; accent-color: var(--accent); }
-
-/* Record screen: the stage */
 .vr-stage {
   padding: 1.25rem;
   border: 1px solid var(--line);
@@ -176,8 +196,6 @@
   background: linear-gradient(90deg, var(--success) 0%, var(--success) 68%, var(--warning) 84%, var(--danger) 100%);
   will-change: clip-path;
 }
-
-/* Record screen: controls */
 .vr-controls {
   display: flex;
   align-items: flex-start;
@@ -209,7 +227,7 @@
   width: clamp(6.5rem, 30vw, 8rem);
   height: clamp(6.5rem, 30vw, 8rem);
   border-radius: 999px;
-  color: #fff;
+  color: var(--on-record);
   background: radial-gradient(
     circle at 35% 30%,
     color-mix(in srgb, var(--danger) 70%, white),
@@ -255,8 +273,6 @@
 @keyframes vr-blink {
   50% { opacity: 0.25; }
 }
-
-/* Recordings: cards */
 .vr-card {
   border: 1px solid var(--line);
   border-radius: calc(var(--radius) * 1.25);
@@ -318,8 +334,6 @@
 .vr-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.1rem; }
 .vr-empty:focus,
 h2[tabindex='-1']:focus { outline: none; }
-
-/* Player */
 .vr-play {
   display: grid;
   flex: none;
@@ -328,12 +342,11 @@ h2[tabindex='-1']:focus { outline: none; }
   height: 3rem;
   border: 0;
   border-radius: 999px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
-  color: #fff;
+  background: var(--vr-play-background);
+  color: var(--vr-play-color);
   cursor: pointer;
   box-shadow: 0 6px 16px var(--glow-warm);
 }
-:root[data-theme='dark'] .vr-play { background: var(--accent); color: #1a0f0b; }
 .vr-play:disabled { opacity: 0.5; cursor: default; }
 .vr-seek {
   --progress: 0%;
@@ -373,8 +386,6 @@ h2[tabindex='-1']:focus { outline: none; }
 .vr-seek:focus-visible { outline: none; }
 .vr-seek:focus-visible::-webkit-slider-thumb { outline: 3px solid var(--accent); outline-offset: 2px; }
 .vr-seek:focus-visible::-moz-range-thumb { outline: 3px solid var(--accent); outline-offset: 2px; }
-
-/* Effect picker: a segmented control that wraps into a 4×2 grid on phones. */
 .vr-segmented {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -405,14 +416,11 @@ h2[tabindex='-1']:focus { outline: none; }
 .vr-segmented__option:hover:not(:disabled):not([aria-checked='true']) { background: var(--panel-strong); }
 .vr-segmented__option[aria-checked='true'] {
   background: var(--panel-strong);
-  color: var(--accent-deep);
+  color: var(--vr-segmented-option-aria-checked-true-color);
   font-weight: 800;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), inset 0 0 0 1.5px var(--accent);
 }
-:root[data-theme='dark'] .vr-segmented__option[aria-checked='true'] { color: var(--accent); }
 .vr-segmented__option:disabled { opacity: 0.5; cursor: default; }
-
-/* Respect "reduce motion": no pulsing, blinking, scaling or sliding. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -428,12 +436,6 @@ h2[tabindex='-1']:focus { outline: none; }
   .vr-record:active:not(:disabled) .vr-record__face,
   button:active { transform: none; }
 }
-
-/* ---------------------------------------------------------------------------
-   Record screen layout: fits the viewport without scrolling, from a 568×320
-   phone in landscape up. Sizes follow the viewport height; short landscape
-   screens get two columns (stage | controls).
-   --------------------------------------------------------------------------- */
 .vr-rec {
   display: flex;
   flex-direction: column;
@@ -470,20 +472,18 @@ h2[tabindex='-1']:focus { outline: none; }
   color: var(--muted);
 }
 .vr-fineprint p { display: flex; gap: 0.45rem; align-items: flex-start; }
-.vr-fineprint svg { flex: none; margin-top: 0.05rem; color: var(--sky-deep); }
-:root[data-theme='dark'] .vr-fineprint svg { color: var(--sky); }
+.vr-fineprint svg { flex: none; margin-top: 0.05rem; color: var(--vr-fineprint-svg-color); }
 .vr-inline-link {
   padding: 0 0.1rem;
   border: 0;
   background: none;
-  color: var(--accent-deep);
+  color: var(--vr-inline-link-color);
   font: inherit;
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: pointer;
 }
-:root[data-theme='dark'] .vr-inline-link { color: var(--accent); }
 .vr-inline-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 .vr-more {
   padding: 0.9rem 1rem;
@@ -509,9 +509,6 @@ h2[tabindex='-1']:focus { outline: none; }
   .vr-wave { height: clamp(2rem, 14vh, 5rem); }
   .vr-record__face { width: clamp(5rem, 28vh, 7rem); height: clamp(5rem, 28vh, 7rem); }
 }
-
-/* Short screens: the page description goes (the title stays); very short
-   ones keep the title for screen readers only. */
 @media (max-height: 599px) {
   .fas-page-header__description { display: none; }
   .fas-page-header { margin-bottom: 0.75rem; }
@@ -526,9 +523,6 @@ h2[tabindex='-1']:focus { outline: none; }
     white-space: nowrap;
   }
 }
-
-/* The platform header on narrow phones: keep "Sign in" on one line and the
-   bar within the screen. The app name stays for screen readers. */
 @media (max-width: 379px) {
   #root header { padding: 0.5rem 0.75rem !important; gap: 0.25rem; }
   #root header > div:first-child { gap: 0.5rem !important; }
@@ -543,4 +537,5 @@ h2[tabindex='-1']:focus { outline: none; }
 }
 @media (max-width: 479px) {
   #root header > div:last-child > button:last-child { padding: 0.55rem 0.9rem !important; white-space: nowrap; }
+}
 }

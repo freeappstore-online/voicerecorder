@@ -79,7 +79,7 @@ function Transport({
           aria-label={`Position in ${label}`}
           aria-valuetext={`${formatDuration(shown * 1000)} of ${formatDuration(duration * 1000)}`}
         />
-        <div className="flex justify-between text-xs tabular-nums text-[var(--muted)]" aria-hidden="true">
+        <div className="flex justify-between text-xs tabular-nums text-muted" aria-hidden="true">
           <span>{formatDuration(shown * 1000)}</span>
           <span>{formatDuration(duration * 1000)}</span>
         </div>

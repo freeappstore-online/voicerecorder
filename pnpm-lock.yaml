@@ -21,8 +21,8 @@ importers:
         specifier: ^5.3.0
         version: 5.3.0
       '@freeappstore/sdk':
-        specifier: ^0.14.36
-        version: 0.14.36(react@19.2.7)
+        specifier: ^0.16.1
+        version: 0.16.1(react@19.2.7)
       react:
         specifier: ^19.2.5
         version: 19.2.7
@@ -594,8 +594,8 @@ packages:
   '@fontsource-variable/manrope@5.3.0':
     resolution: {integrity: sha512-6D5dgokHsWDDMtmXHznKa0hK229NN+1a4BLPmUCLqcO1Pw5EEhWY5RFt0AcXnVRAljFFPfRtLkJePQj6LSsV6g==}
 
-  '@freeappstore/sdk@0.14.36':
-    resolution: {integrity: sha512-Ud4qy2nzS6OjaYZuEARLBIzsJx3ol7vCkfPke6aKJE70lkmcvXMzZPfz80hvRykzw123twCrULVavb7l2VDAuw==}
+  '@freeappstore/sdk@0.16.1':
+    resolution: {integrity: sha512-XaMpco5H0ZoI3pFVRyZ2O1RhHpBOmOG82G7X+Qiowg2nyfMks1+vkov3b62FfH1VtQaJutTmS9zsZMk2f0faEw==}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
     peerDependenciesMeta:
@@ -2961,7 +2961,7 @@ snapshots:
 
   '@fontsource-variable/manrope@5.3.0': {}
 
-  '@freeappstore/sdk@0.14.36(react@19.2.7)':
+  '@freeappstore/sdk@0.16.1(react@19.2.7)':
     optionalDependencies:
       react: 19.2.7
 

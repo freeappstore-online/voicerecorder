@@ -212,7 +212,7 @@ export function Record({ navigate }: { navigate: (href: string) => void }) {
             <span className="vr-pill__dot" aria-hidden="true" />
             {status}
           </span>
-          <span className="text-xs text-[var(--muted)]">On this device only</span>
+          <span className="text-xs text-muted">On this device only</span>
         </div>
 
         <p role="timer" aria-label="Elapsed time" className="display-font vr-timer">

@@ -129,7 +129,7 @@ export function Recordings() {
         <h2 ref={headingRef} tabIndex={-1} className="text-base font-semibold">
           {items.length === 1 ? '1 recording' : `${items.length} recordings`}
         </h2>
-        <p className="text-sm text-[var(--muted)]">{formatSize(totalBytes)} on this device</p>
+        <p className="text-sm text-muted">{formatSize(totalBytes)} on this device</p>
       </div>
       <ul className="flex flex-col gap-3" aria-label="Recordings">
         {items.map((rec) => (
@@ -340,7 +340,7 @@ function RecordingPanel({
   return (
     <>
       {failed ? (
-        <p role="alert" className="text-[var(--danger)]">
+        <p role="alert" className="text-danger">
           This recording's audio could not be loaded.
         </p>
       ) : blob ? (
